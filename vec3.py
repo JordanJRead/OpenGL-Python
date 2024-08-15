@@ -20,7 +20,7 @@ class Vec3:
     def __mul__(self, other):
         if type(other) in [float, int]:
             return Vec3(self.x * other, self.y * other, self.z * other)
-        elif type(other == Vec3): # Dot product
+        elif type(other) == Vec3: # Dot product
             return self.x * other.x + self.y * other.y + self.z * other.z
         raise TypeError
     

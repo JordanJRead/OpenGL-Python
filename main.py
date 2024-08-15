@@ -34,11 +34,9 @@ class App:
             compileShader(fragment_src, GL_FRAGMENT_SHADER)
         )
 
-        glUseProgram(self.shader)
-
-        self.camera = Camera(0.1, 100, 90, 1920/1080, 3, 0.005)
+        self.camera = Camera(0.1, 10000, 90, 1920, 1080, 3, 0.005)
     
-        glUniformMatrix4fv(glGetUniformLocation(self.shader, "projectionMatrix"), 1, GL_TRUE, self.camera.get_projection_matrix())
+        glUseProgram(self.shader)
 
         # Cube texture
         self.cubeTex = CubeTexture([
@@ -86,7 +84,7 @@ class App:
             -0.5,  0.5,  0.5, 0, 0, 1, #0, 0,
 
             # Right forward up
-             0.5,  0.5,  0.5, 1, 0, 0, #
+             0.5,  0.5,  0.5, 1, 0, 0,
              0.5,  0.5, -0.5, 0, 1, 0,
              0.5, -0.5, -0.5, 0, 0, 1,
 
@@ -114,6 +112,10 @@ class App:
         # Meshes
         self.meshes = [
             Mesh(vertices, Vec3(0, 0, 2), Vec3(1, 1, 1))
+        ]
+        
+        self.skybox_meshes = [
+            Mesh(vertices, Vec3(0, 0, 0), Vec3(10, 10, 10))
         ]
         
         self.main_loop()
@@ -154,13 +156,30 @@ class App:
 
             # Rendering
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+            glUniformMatrix4fv(glGetUniformLocation(self.shader, "projectionMatrix"), 1, GL_TRUE, self.camera.get_projection_matrix())
 
-            glUniformMatrix4fv(glGetUniformLocation(self.shader, "viewMatrix"), 1, GL_FALSE, self.camera.get_view_matrix())
+            # Skybox meshes
+            if len(self.skybox_meshes) > 0:
 
-            for mesh in self.meshes:
-                glBindVertexArray(mesh.vao)
-                glUniformMatrix4fv(glGetUniformLocation(self.shader, "modelMatrix"), 1, GL_FALSE, mesh.model_matrix)
-                glDrawArrays(GL_TRIANGLES, 0, len(mesh.vertices))
+                glUniformMatrix4fv(glGetUniformLocation(self.shader, "viewMatrix"), 1, GL_FALSE, self.camera.get_view_matrix(False))
+
+                for skybox_mesh in self.skybox_meshes:
+                    glBindVertexArray(skybox_mesh.vao)
+                    glUniformMatrix4fv(glGetUniformLocation(self.shader, "modelMatrix"), 1, GL_FALSE, skybox_mesh.model_matrix)
+                    glDrawArrays(GL_TRIANGLES, 0, len(skybox_mesh.vertices))
+
+            glClear(GL_DEPTH_BUFFER_BIT)
+            
+            # Regular meshes
+            if len(self.meshes) > 0:
+
+                glUniformMatrix4fv(glGetUniformLocation(self.shader, "viewMatrix"), 1, GL_FALSE, self.camera.get_view_matrix())
+
+                for mesh in self.meshes:
+                    glBindVertexArray(mesh.vao)
+                    glUniformMatrix4fv(glGetUniformLocation(self.shader, "modelMatrix"), 1, GL_FALSE, mesh.model_matrix)
+                    glDrawArrays(GL_TRIANGLES, 0, len(mesh.vertices))
+            
 
             pg.display.flip()
             delta_time = self.clock.tick() / 1000

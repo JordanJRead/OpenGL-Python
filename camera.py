@@ -6,7 +6,7 @@ import pyrr
 
 class Camera:
     
-    def __init__(self, near_distance: float, far_distance: float, horizontal_fov_deg: float, aspect_ratio, speed, sens, position: Vec3 = Vec3(0, 0, 0)) -> None:
+    def __init__(self, near_distance: float, far_distance: float, horizontal_fov_deg: float, width: int, height: int, speed, sens, position: Vec3 = Vec3(0, 0, 0)) -> None:
         self.position = position
         self.pitch = 0
         self.yaw = 0
@@ -15,7 +15,9 @@ class Camera:
         self.horizontal_fov_deg = horizontal_fov_deg
         self.near_distance = near_distance
         self.far_distance = far_distance
-        self.aspect_ratio = aspect_ratio
+        self.width = width
+        self.height = height
+        self.aspect_ratio = width / height
         self.prev_mouse_position = pg.mouse.get_pos()
 
     def get_projection_matrix(self):
@@ -34,11 +36,12 @@ class Camera:
 
         return projection
     
-    def get_view_matrix(self):
+    def get_view_matrix(self, usePosition = True):
         camera_matrix = pyrr.matrix44.create_identity(dtype=np.float32)
         camera_matrix = pyrr.matrix44.multiply(camera_matrix, pyrr.matrix44.create_from_axis_rotation([1, 0, 0], self.pitch, dtype=np.float32))
         camera_matrix = pyrr.matrix44.multiply(camera_matrix, pyrr.matrix44.create_from_axis_rotation([0, 1, 0], self.yaw, dtype=np.float32))
-        camera_matrix = pyrr.matrix44.multiply(camera_matrix, pyrr.matrix44.create_from_translation(self.position.to_list()))
+        if usePosition:
+            camera_matrix = pyrr.matrix44.multiply(camera_matrix, pyrr.matrix44.create_from_translation(self.position.to_list()))
         return pyrr.matrix44.inverse(camera_matrix)
     
     def move_forward(self, move_by: Vec3, delta_time: float):
@@ -62,4 +65,11 @@ class Camera:
         if self.pitch <= -pi / 2:
             self.pitch = -pi / 2 + 0.001
 
+        
+        # Keep mouse from moving off screen
+        if not (self.width/4 < current_mouse_x < 3 * (self.width/4)):
+            pg.mouse.set_pos(self.width/2, self.height/2)
+        if not (self.height/4 < current_mouse_y < 3 * (self.height/4)):
+            pg.mouse.set_pos(self.width/2, self.height/2)
+            
         self.prev_mouse_position = pg.mouse.get_pos()
