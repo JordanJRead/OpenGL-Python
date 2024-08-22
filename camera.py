@@ -19,6 +19,7 @@ class Camera:
         self.height = height
         self.aspect_ratio = width / height
         self.prev_mouse_position = pg.mouse.get_pos()
+        self.projection_matrix = self.get_projection_matrix()
 
     def get_projection_matrix(self):
         width = self.near_distance*tan(radians(self.horizontal_fov_deg / 2))
